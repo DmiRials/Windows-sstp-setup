@@ -1,61 +1,65 @@
-# SSTP VPN Setup
+# Настройка SSTP VPN
 
-A single-file tool for quickly setting up an **SSTP VPN** client on Windows. It installs a root certificate into the trusted store and creates a VPN connection for the current user.
+[🇷🇺 Русский](README.md) | [🇬🇧 English](README.en.md)
 
-> This template is intended for personal PCs. Before distributing it, change the settings in the `Settings` block and place your own root certificate next to the script.
+Однофайловый инструмент для быстрой настройки клиента **SSTP VPN** на Windows: устанавливает корневой сертификат в доверенные корневые центры и создаёт VPN-подключение для текущего пользователя.
 
-## Files
+> Шаблон рассчитан на персональные ПК. Перед раздачей измените настройки в блоке `Settings` и положите рядом со скриптом свой корневой сертификат.
 
-- `SSTP-Setup.cmd` - the whole tool: a `cmd` loader plus an embedded PowerShell body in one file.
-- `Cert.crt` - an example root certificate for the VPN server.
+## Файлы
 
-## Quick start
+- `SSTP-Setup.cmd` — весь инструмент: `cmd`-загрузчик + встроенное тело PowerShell в одном файле.
+- `Cert.crt` — пример корневого сертификата VPN-сервера.
 
-1. Put `SSTP-Setup.cmd` and the root certificate file into the **same folder**.
-2. Make sure the certificate file name matches `$CertFileName` in the settings (default: `Cert.crt`).
-3. Run `SSTP-Setup.cmd` by **double-clicking** it.
-4. Click **Yes** on the UAC prompt to install the certificate.
-5. The VPN connection is created automatically for your account.
-6. Open *Windows Settings > VPN* and connect using your username and password.
+## Быстрый старт
 
-## Run scenarios
+1. Поместите `SSTP-Setup.cmd` и файл корневого сертификата в **одну папку**.
+2. Убедитесь, что имя файла сертификата совпадает со значением `$CertFileName` в настройках (по умолчанию `Cert.crt`).
+3. Запустите `SSTP-Setup.cmd` **двойным кликом**.
+4. На запрос UAC нажмите **«Да»** — сертификат установится.
+5. VPN-подключение создастся автоматически для вашей учётной записи.
+6. Откройте *Параметры Windows → VPN* и подключитесь, введя логин и пароль.
 
-| Action | Result |
+## Сценарии запуска
+
+| Действие | Что произойдёт |
 | --- | --- |
-| Double-click | One UAC prompt appears, the root certificate is installed, and the VPN connection is created for the current user |
-| Run as administrator | Only the certificate is installed. Double-click the file again to create the profile |
-| UAC dismissed | Setup stops and no VPN profile is created |
-| Certificate file missing | A clear error is shown and no UAC prompt appears |
+| Двойной клик | Один запрос UAC → установка корневого сертификата, затем создание VPN-подключения для текущего пользователя |
+| «Запуск от имени администратора» | Устанавливается **только** сертификат. Профиль создаётся повторным двойным кликом |
+| Отмена UAC («Нет») | Настройка останавливается, VPN-профиль не создаётся |
+| Нет файла сертификата рядом | Выводится понятная ошибка, запрос UAC не появляется |
 
-## Settings
+## Настройки
 
-Open `SSTP-Setup.cmd` and edit the block at the start of the PowerShell body:
+Откройте `SSTP-Setup.cmd` и измените блок в начале PowerShell-тела:
 
 ```powershell
-$VpnName      = 'VPN'           # VPN connection name
-$VpnServer    = '1.1.1.1'       # SSTP server address (domain or IP)
-$IdleTimeout  = 1800            # Idle disconnect timeout, in seconds
-$CertFileName = 'Cert.crt'      # Root certificate file name next to the script
+$VpnName      = 'VPN'           # имя VPN-подключения
+$VpnServer    = '1.1.1.1'       # адрес SSTP-сервера (домен или IP)
+$IdleTimeout  = 1800            # авто-отключение при простое, сек
+$CertFileName = 'Cert.crt'      # имя файла корневого сертификата рядом со скриптом
 ```
 
-To make a copy for another server, change only this block. Do not modify the `RUNNER` line or the `__PS_START__` marker line.
+Чтобы сделать копию под другой сервер, меняйте только этот блок. Строку `RUNNER` и строку-маркер `__PS_START__` не изменяйте.
 
-## Certificate
+Сам файл — обычный текст на английском (ASCII), поэтому проблем с кодировкой нет: его можно сохранять в любой кодировке, UTF-8 подходит.
 
-- Keep the **root certificate** that signed your SSTP server certificate next to the script.
-- The certificate is installed to `LocalMachine\Root` (Trusted Root Certification Authorities). Keep the root certificate's private key only with the server administrator.
-- The server must present a **leaf** certificate issued by this root.
-- The `Cert.crt` file in this repository is only an example.
+## Сертификат
 
-## How it works
+- Рядом со скриптом должен лежать **корневой сертификат**, которым подписан сертификат вашего SSTP-сервера.
+- Сертификат устанавливается в хранилище `LocalMachine\Root` (доверенные корневые центры сертификации). Приватный ключ корня храните только у администратора сервера.
+- Сервер должен предъявлять **листовой** сертификат, выпущенный этим корнем.
+- Файл `Cert.crt` в репозитории — только пример.
 
-- The script is a single file: a `cmd` part plus a PowerShell body after the `__PS_START__` marker.
-- Double-clicking launches an elevated copy to install the certificate with `certutil -addstore -f Root`, then creates the profile as the current user with `Add-VpnConnection` or `Set-VpnConnection`. The profile belongs to that user and does not require administrator rights.
+## Как это работает
 
-## Troubleshooting
+- Скрипт — один файл: `cmd`-часть + тело PowerShell после маркера `__PS_START__`.
+- Двойной клик запускает повышенную копию для установки сертификата через `certutil -addstore -f Root`, затем профиль создаётся от имени текущего пользователя через `Add-VpnConnection` или `Set-VpnConnection`. Профиль принадлежит этому пользователю и не требует прав администратора.
 
-| Message or symptom | Cause and fix |
+## Устранение неполадок
+
+| Сообщение или симптом | Причина и решение |
 | --- | --- |
-| Certificate not found | The certificate file is missing or its name differs from `$CertFileName`. Place the file next to the script and try again |
-| Error installing the certificate | UAC was dismissed or the certificate is invalid. Check the file and try again |
-| VPN does not connect | Check the server address, confirm the server presents a leaf certificate from this root, and verify your username and password |
+| Сертификат не найден | Файл сертификата отсутствует или его имя отличается от `$CertFileName`. Положите файл рядом со скриптом и повторите |
+| Ошибка установки сертификата | UAC был отклонён или сертификат недействителен. Проверьте файл и повторите |
+| VPN не подключается | Проверьте адрес сервера, убедитесь, что сервер предъявляет листовой сертификат от этого корня, и проверьте логин и пароль |
